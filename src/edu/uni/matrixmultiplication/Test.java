@@ -24,6 +24,8 @@ public class Test
 				new Thread(threads[i][j]).start();
 			}
 		}
+		
+		//make with event listeners
 		int[][] result = new int[m][m];
 		boolean ready = true;
 		do
