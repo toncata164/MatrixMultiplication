@@ -15,35 +15,29 @@ public class Test
 		print(A);
 		print(B);
 		MatrixThread[][] threads = new MatrixThread[m][m];
+		int[][] result = new int[m][m];
 		for(int i = 0; i<threads.length; i++)
 		{
 			for(int j = 0; j<threads[i].length; j++)
 			{
 				threads[i][j] = new MatrixThread(A[i], 
-						getColumn(B, j));
+						getColumn(B, j), i, j);
+				threads[i][j].addMatrixThreadListener(new MatrixThreadEventListener(){
+
+					@Override
+					public void threadFinished(MatrixThreadEvent e)
+					{
+						MatrixThread t = (MatrixThread) e.getSource();
+						result[t.getRowIndex()][t.getColumnIndex()] = t.getResult();
+					}
+					
+				});
 				new Thread(threads[i][j]).start();
 			}
 		}
 		
-		//make with event listeners
-		int[][] result = new int[m][m];
-		boolean ready = true;
-		do
+		while(MatrixThread.getWorkingThreads() > 0)
 		{
-			ready = true;
-			for(int i = 0; i<threads.length; i++)
-			{
-				for(int j = 0; j<threads[i].length; j++)
-				{
-					if(threads[i][j].isReady())
-						result[i][j] = threads[i][j].getResult();
-					ready = ready && threads[i][j].isReady();
-					if(!ready)
-						break;
-				}
-				if(!ready)
-					break;
-			}
 			try
 			{
 				Thread.sleep(1);
@@ -52,7 +46,7 @@ public class Test
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}while(!ready);
+		}
 		print(result);
 	}
 	
