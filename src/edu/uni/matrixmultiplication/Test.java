@@ -1,5 +1,10 @@
 package edu.uni.matrixmultiplication;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 public class Test
@@ -7,84 +12,87 @@ public class Test
 
 	public static void main(String[] args)
 	{
-		int m=2, n=3, k=3;
-		int[][] A = new int[m][n];
-		int[][] B = new int[k][m];
-		generate(A);
-		generate(B);
-		print(A);
-		print(B);
-		MatrixThread[][] threads = new MatrixThread[m][m];
-		int[][] result = new int[m][m];
-		for(int i = 0; i<threads.length; i++)
+		HashMap<String, String> params = new HashMap<>();
+		for(int i = 0; i<args.length; i+=2)
 		{
-			for(int j = 0; j<threads[i].length; j++)
-			{
-				threads[i][j] = new MatrixThread(A[i], 
-						getColumn(B, j), i, j);
-				threads[i][j].addMatrixThreadListener(new MatrixThreadEventListener(){
-
-					@Override
-					public void threadFinished(MatrixThreadEvent e)
-					{
-						MatrixThread t = (MatrixThread) e.getSource();
-						result[t.getRowIndex()][t.getColumnIndex()] = t.getResult();
-					}
-					
-				});
-				new Thread(threads[i][j]).start();
-			}
+			params.put(args[i], args[i+1]);
 		}
 		
-		while(MatrixThread.getWorkingThreads() > 0)
+		int m = -1, n = -1, k = -1, t = -1;
+		String fileName = null;
+		String output = null;
+		
+		if(params.containsKey("-m"))
+			m = Integer.parseInt(params.get("-m"));
+		if(params.containsKey("-n"))
+			n = Integer.parseInt(params.get("-n"));
+		if(params.containsKey("-k"))
+			k = Integer.parseInt(params.get("-k"));
+		if(params.containsKey("-t"))
+			t = Integer.parseInt(params.get("-t"));
+		if(params.containsKey("-i"))
+			fileName = params.get("-i");
+		if(params.containsKey("-o"))
+			output = params.get("-o");
+		
+		Matrix first = null;
+		Matrix second = null;
+		Matrix result = null;
+		
+		if(m != -1 && n != -1 && k != -1 && fileName == null)
+		{
+			second  = new Matrix(n, k);
+			second.generateRandomMatrix(0, 10);
+			first = new Matrix(m, n);
+			first.generateRandomMatrix(0, 10);
+			result = new Matrix(m, k);
+		}
+		else if(fileName != null && m == -1 && n == -1 && k == -1)
 		{
 			try
 			{
-				Thread.sleep(1);
-			} catch (InterruptedException e)
+				readMatricesFromFile(fileName, first, second);
+			} catch (IOException e)
 			{
-				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FileFormatException e)
+			{
 				e.printStackTrace();
 			}
+			result = new Matrix(first.getNumberOfRows(), second.getNumberOfColumns());
 		}
-		print(result);
-	}
-	
-	public static void print(int[][] matrix)
-	{
-		for(int i = 0; i<matrix.length; i++)
+		else
 		{
-			for(int j = 0; j<matrix[i].length; j++)
-			{
-				System.out.print(matrix[i][j]+" ");
-			}
-			System.out.println();
+			System.out.print("Wrong parameters passed to application!");
 		}
-		System.out.println();
-	}
-	
-	public static void generate(int[][] matrix)
-	{
-		Random r = new Random();
-		for(int i = 0; i<matrix.length; i++)
+		
+		if(t == -1)
+			t = 1;
+		
+		for(int i = 0; i<t; i++)
 		{
-			for(int j = 0; j<matrix[i].length; j++)
-			{
-				matrix[i][j] = r.nextInt(2);
-			}
+			MatrixThread matrixThread = new MatrixThread(first, second, i, t, result);
+			Thread tm = new Thread(matrixThread);
+			tm.start();
 		}
 	}
-	
-	public static int[] getColumn(int[][] matrix, int colIndex)
-	{
-		int[] column = new int[matrix.length];
-		for(int i = 0; i<matrix.length; i++)
-		{
-			column[i] = matrix[i][colIndex];
-		}
-		return column;
-	}
- 	
-	
 
+	private static void readMatricesFromFile(String fileName, Matrix first, Matrix second) throws IOException, FileFormatException
+	{
+		List<String> rows = Files.readAllLines(new File(fileName).toPath());
+		String[] firstRow = rows.get(0).trim().split(" ");
+		if(firstRow.length != 3)
+		{
+			throw new FileFormatException("The dimensions of the matrices must be 3 integer not negative and not zero values.");
+		}
+		int m = Integer.parseInt(firstRow[0]);
+		int n = Integer.parseInt(firstRow[1]);
+		int k = Integer.parseInt(firstRow[2]);
+		
+		first = new Matrix(m, n);
+		second = new Matrix(n, k);
+		
+		
+		
+	} 	
 }

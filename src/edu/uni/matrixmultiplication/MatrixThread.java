@@ -1,16 +1,25 @@
 package edu.uni.matrixmultiplication;
 
+import java.util.Date;
+
 import javax.swing.event.EventListenerList;
 
 public class MatrixThread implements Runnable
-{	
-	private int[] row;
-	private int[] column;
-	private int result;
-	private int rowIndex;
-	private int columnIndex;
-
+{
+	private Matrix first;
+	private Matrix second;
+	private int threadIndex;
+	private Matrix multiplicationResult;
+	private int numberOfThreads;
+	
+	
+	private static boolean showLog = true;
 	private static int workingThreads = 0;
+	
+	public static void showLog(boolean value)
+	{
+		showLog = value;
+	}
 	
 	private EventListenerList events;
 	
@@ -36,14 +45,37 @@ public class MatrixThread implements Runnable
 		}
 	}
 	
-	public MatrixThread(int[] row, int[] column, int rowIndex, int columnIndex)
+	private void fireAllThreadsFinished(MatrixThreadEvent e)
 	{
-		this.row = row;
-		this.column = column;
-		result = 0;
-		events = new EventListenerList();
-		this.rowIndex = rowIndex;
-		this.columnIndex = columnIndex;
+		Object[] o = events.getListenerList();
+		for(int i = 0; i<o.length; i+=2)
+		{
+			if(o[i] == MatrixThreadEventListener.class)
+			{
+				((MatrixThreadEventListener) o[i+1]).allThreadsFinished(e);
+			}
+		}
+	}
+	
+	private void fireThreadStarted(MatrixThreadEvent e)
+	{
+		Object[] o = events.getListenerList();
+		for(int i = 0; i<o.length; i+=2)
+		{
+			if(o[i] == MatrixThreadEventListener.class)
+			{
+				((MatrixThreadEventListener) o[i+1]).threadStarted(e);
+			}
+		}
+	}
+	
+	public MatrixThread(Matrix first, Matrix second, int threadIndex, int numberOfThreads, Matrix multiplicationResult)
+	{
+		this.first = first;
+		this.second = second;
+		this.threadIndex = threadIndex;
+		this.numberOfThreads = numberOfThreads;
+		this.multiplicationResult = multiplicationResult;
 		workingThreads+=1;
 	}
 	
@@ -51,37 +83,26 @@ public class MatrixThread implements Runnable
 	@Override
 	public void run()
 	{
+		fireThreadStarted(new MatrixThreadEvent(this, new Date()));
+		//calculate how many work has to do the current thread
 		
-		for(int i = 0; i<row.length; i++)
-		{
-			result += row[i]*column[i];
-		}
-		fireThreadFinished(new MatrixThreadEvent(this));
-		a();
+		//the main work
+		
+		fireThreadFinished(new MatrixThreadEvent(this, new Date()));
+		decreaseNumberOfWorkingThreadsByOne();
 	}
 	
-	private static synchronized void a()
+	private synchronized void decreaseNumberOfWorkingThreadsByOne()
 	{
 		workingThreads-=1;
+		if(workingThreads == 0)
+		{
+			fireAllThreadsFinished(new MatrixThreadEvent(null, new Date()));
+		}
 	}
 	
 	public static int getWorkingThreads()
 	{
 		return workingThreads;
-	}
-	
-	public int getResult()
-	{
-		return result;
-	}
-	
-	public int getRowIndex()
-	{
-		return rowIndex;
-	}
-	
-	public int getColumnIndex()
-	{
-		return columnIndex;
 	}
 }
