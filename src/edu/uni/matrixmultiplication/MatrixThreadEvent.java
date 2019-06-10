@@ -5,10 +5,18 @@ import java.util.EventObject;
 
 public class MatrixThreadEvent extends EventObject
 {
-
+	private Date eventTime;
+	
+	
 	public MatrixThreadEvent(MatrixThread source, Date eventTime)
 	{
 		super(source);
+		this.eventTime = eventTime;
+	}
+	
+	public Date getEventTime()
+	{
+		return eventTime;
 	}
 
 }

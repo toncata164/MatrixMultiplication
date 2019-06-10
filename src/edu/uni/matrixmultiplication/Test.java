@@ -3,12 +3,41 @@ package edu.uni.matrixmultiplication;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
 public class Test
 {
+	private static MatrixThreadEventListener e = new MatrixThreadEventListener()
+	{
+		
+		@Override
+		public void threadStarted(MatrixThreadEvent e)
+		{
+			Date d = e.getEventTime();
+			MatrixThread t = (MatrixThread)e.getSource();
+			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+			System.out.printf("Thread %d started at %s\n", t.getIndex(), sdf.format(d));
+		}
+		
+		@Override
+		public void threadFinished(MatrixThreadEvent e)
+		{
+			Date d = e.getEventTime();
+			MatrixThread t = (MatrixThread)e.getSource();
+			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+			System.out.printf("Thread %d finished at %s\n", t.getIndex(), sdf.format(d));
+		}
+		
+		@Override
+		public void allThreadsFinished(MatrixThreadEvent e)
+		{
+			System.out.println("All the work is ready!");
+		}
+	};
 
 	public static void main(String[] args)
 	{
@@ -35,16 +64,19 @@ public class Test
 		if(params.containsKey("-o"))
 			output = params.get("-o");
 		
-		Matrix first = null;
-		Matrix second = null;
+		ByRef<Matrix> first = new ByRef<>();
+		ByRef<Matrix> second = new ByRef<>();
 		Matrix result = null;
 		
 		if(m != -1 && n != -1 && k != -1 && fileName == null)
 		{
-			second  = new Matrix(n, k);
-			second.generateRandomMatrix(0, 10);
-			first = new Matrix(m, n);
-			first.generateRandomMatrix(0, 10);
+			second.setValue(new Matrix(n, k));
+			second.getValue().generateRandomMatrix(0, 10);
+			first.setValue(new Matrix(m, n));
+			first.getValue().generateRandomMatrix(0, 10);
+			/*System.out.println(first.getValue());
+			System.out.println();
+			System.out.println(second.getValue());*/
 			result = new Matrix(m, k);
 		}
 		else if(fileName != null && m == -1 && n == -1 && k == -1)
@@ -52,6 +84,10 @@ public class Test
 			try
 			{
 				readMatricesFromFile(fileName, first, second);
+				/*System.out.println(first.getValue());
+				System.out.println();
+				System.out.println(second.getValue());*/
+			
 			} catch (IOException e)
 			{
 				e.printStackTrace();
@@ -59,7 +95,7 @@ public class Test
 			{
 				e.printStackTrace();
 			}
-			result = new Matrix(first.getNumberOfRows(), second.getNumberOfColumns());
+			//result = new Matrix(first.getNumberOfRows(), second.getNumberOfColumns());
 		}
 		else
 		{
@@ -71,13 +107,14 @@ public class Test
 		
 		for(int i = 0; i<t; i++)
 		{
-			MatrixThread matrixThread = new MatrixThread(first, second, i, t, result);
+			MatrixThread matrixThread = new MatrixThread(first.getValue(), second.getValue(), i, t, result);
+			matrixThread.addMatrixThreadListener(e);
 			Thread tm = new Thread(matrixThread);
 			tm.start();
 		}
 	}
 
-	private static void readMatricesFromFile(String fileName, Matrix first, Matrix second) throws IOException, FileFormatException
+	private static void readMatricesFromFile(String fileName, ByRef<Matrix> first, ByRef<Matrix> second) throws IOException, FileFormatException
 	{
 		List<String> rows = Files.readAllLines(new File(fileName).toPath());
 		String[] firstRow = rows.get(0).trim().split(" ");
@@ -89,10 +126,28 @@ public class Test
 		int n = Integer.parseInt(firstRow[1]);
 		int k = Integer.parseInt(firstRow[2]);
 		
-		first = new Matrix(m, n);
-		second = new Matrix(n, k);
+		first.setValue(new Matrix(m, n));
+		second.setValue(new Matrix(n, k));
 		
+		int column = 0;
+		for(int row = 1; row<=m; row++)
+		{
+			String[] numbers = rows.get(row).trim().split(" ");
+			for(String number : numbers)
+			{
+				first.getValue().setValueAt(Double.parseDouble(number), row-1, column++);
+			}
+			column = 0;
+		}
 		
-		
+		for(int row = m+1; row<m+n; row++)
+		{
+			String[] numbers = rows.get(row).trim().split(" ");
+			for(String number : numbers)
+			{
+				second.getValue().setValueAt(Double.parseDouble(number), row-m-1, column++);
+			}
+			column = 0;
+		}
 	} 	
 }

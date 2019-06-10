@@ -1,6 +1,7 @@
 package edu.uni.matrixmultiplication;
 
 import java.util.Date;
+import java.util.Random;
 
 import javax.swing.event.EventListenerList;
 
@@ -21,7 +22,12 @@ public class MatrixThread implements Runnable
 		showLog = value;
 	}
 	
-	private EventListenerList events;
+	public int getIndex()
+	{
+		return threadIndex;
+	}
+	
+	private EventListenerList events = new EventListenerList();
 	
 	public void addMatrixThreadListener(MatrixThreadEventListener l)
 	{
@@ -80,12 +86,19 @@ public class MatrixThread implements Runnable
 	}
 	
 	
+	//r = 4 c = 7  t = 5
+	
 	@Override
 	public void run()
 	{
 		fireThreadStarted(new MatrixThreadEvent(this, new Date()));
 		//calculate how many work has to do the current thread
-		
+		/*int maxNumberOfOperations = first.getNumberOfRows() * second.getNumberOfColumns();
+		int operationsPerThread = maxNumberOfOperations / numberOfThreads;
+		int currentThreadFirstOperation = operationsPerThread * threadIndex;
+		//every row of first multiplies k times where k is number of columns of second
+		int startRow = currentThreadFirstOperation / first.getNumberOfRows()-1;
+		int startColumn = currentThreadFirstOperation % second.getNumberOfColumns();*/
 		//the main work
 		
 		fireThreadFinished(new MatrixThreadEvent(this, new Date()));
@@ -97,7 +110,7 @@ public class MatrixThread implements Runnable
 		workingThreads-=1;
 		if(workingThreads == 0)
 		{
-			fireAllThreadsFinished(new MatrixThreadEvent(null, new Date()));
+			fireAllThreadsFinished(new MatrixThreadEvent(this, new Date()));
 		}
 	}
 	
