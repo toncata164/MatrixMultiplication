@@ -1,6 +1,7 @@
 package edu.uni.matrixmultiplication;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -11,12 +12,17 @@ import java.util.Random;
 
 public class Test
 {
+	private static Date startTime = null;
+	private static HashMap<String, String> params = new HashMap<>();
+	private static Matrix result = null;
 	private static MatrixThreadEventListener e = new MatrixThreadEventListener()
 	{
 		
 		@Override
 		public void threadStarted(MatrixThreadEvent e)
 		{
+			if(MatrixThread.quietMode())
+				return;
 			Date d = e.getEventTime();
 			MatrixThread t = (MatrixThread)e.getSource();
 			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
@@ -26,6 +32,8 @@ public class Test
 		@Override
 		public void threadFinished(MatrixThreadEvent e)
 		{
+			if(MatrixThread.quietMode())
+				return;
 			Date d = e.getEventTime();
 			MatrixThread t = (MatrixThread)e.getSource();
 			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
@@ -35,22 +43,47 @@ public class Test
 		@Override
 		public void allThreadsFinished(MatrixThreadEvent e)
 		{
-			System.out.println("All the work is ready!");
+			System.out.printf("Ends at %s\n", new SimpleDateFormat("HH:mm:ss:SSS").format(e.getEventTime()));
+			System.out.printf("All work was finished in %d milliseconds\n", e.getEventTime().getTime() - startTime.getTime());
+			if(params.containsKey("-o") && result != null)
+			{
+				try
+				{
+					result.writeToFile(params.get("-o"));
+				} 
+				catch (FileNotFoundException ex)
+				{
+					// TODO Auto-generated catch block
+					ex.printStackTrace();
+				}
+			}
+			if(!params.containsKey("-o") && result != null)
+			{
+				System.out.println(result);
+			}
 		}
 	};
 
 	public static void main(String[] args)
-	{
-		HashMap<String, String> params = new HashMap<>();
-		for(int i = 0; i<args.length; i+=2)
+	{	
+		int incrementor = 2;
+		for(int i = 0; i<args.length; i+=incrementor)
 		{
-			params.put(args[i], args[i+1]);
+			if(!args[i].equals("-q"))
+			{
+				params.put(args[i], args[i+1]);
+				incrementor = 2;
+			}
+			else
+			{
+				params.put(args[i], "");
+				incrementor = 1;
+			}
 		}
 		
 		
 		int m = -1, n = -1, k = -1, t = -1;
 		String fileName = null;
-		String output = null;
 		
 		if(params.containsKey("-m"))
 			m = Integer.parseInt(params.get("-m"));
@@ -62,12 +95,12 @@ public class Test
 			t = Integer.parseInt(params.get("-t"));
 		if(params.containsKey("-i"))
 			fileName = params.get("-i");
-		if(params.containsKey("-o"))
-			output = params.get("-o");
+		if(params.containsKey("-q"))
+			MatrixThread.quietMode(true);
 		
 		ByRef<Matrix> first = new ByRef<>();
 		ByRef<Matrix> second = new ByRef<>();
-		Matrix result = null;
+		
 		
 		if(m != -1 && n != -1 && k != -1 && fileName == null)
 		{
@@ -96,7 +129,7 @@ public class Test
 			{
 				e.printStackTrace();
 			}
-			//result = new Matrix(first.getNumberOfRows(), second.getNumberOfColumns());
+			result = new Matrix(first.getValue().getNumberOfRows(), second.getValue().getNumberOfColumns());
 		}
 		else
 		{
@@ -105,6 +138,10 @@ public class Test
 		
 		if(t == -1)
 			t = 1;
+		
+		startTime = new Date();
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+		System.out.printf("Starts at %s\n", sdf.format(startTime));
 		
 		for(int i = 0; i<t; i++)
 		{
