@@ -20,3 +20,4 @@ public class ByRef<T>
 	}
 
 }
+//predava stoynost po referenciq

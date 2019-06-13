@@ -5,6 +5,7 @@ import java.util.EventObject;
 
 public class MatrixThreadEvent extends EventObject
 {
+	
 	private Date eventTime;
 	
 	
@@ -18,5 +19,5 @@ public class MatrixThreadEvent extends EventObject
 	{
 		return eventTime;
 	}
-
+	//subitie koeto pazi tochna data v koqto se e sluchilo
 }

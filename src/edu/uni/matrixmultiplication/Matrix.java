@@ -100,3 +100,7 @@ public class Matrix
 		writer.close();
 	}
 }
+//opisva matrica s broy redove i koloni, posredstvom metodi dava vuzmojnost tq da se generira
+//na random princip i da se zapishe v textov file
+
+
