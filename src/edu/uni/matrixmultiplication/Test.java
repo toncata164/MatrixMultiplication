@@ -61,6 +61,7 @@ public class Test
 			{
 				System.out.println(result);
 			}
+			System.exit(0);
 		}
 	};
 
@@ -81,6 +82,14 @@ public class Test
 			}
 		}
 		
+		/*
+		params.put("-m", "100");
+		params.put("-n", "100");
+		params.put("-k", "100");
+		params.put("-t", "10");
+		params.put("-q", "");
+		params.put("-o", "dupe.txt");
+		*/
 		
 		int m = -1, n = -1, k = -1, t = -1;
 		String fileName = null;

@@ -85,7 +85,7 @@ public class Matrix
 				builder.append(matrix[i][j]);
 				builder.append(" ");
 			}
-			builder.append("\n");
+			builder.append("\r\n");
 		}
 		return builder.toString();
 	}
@@ -94,7 +94,7 @@ public class Matrix
 	{
 		File f = new File(fileName);
 		PrintWriter writer = new PrintWriter(f);
-		writer.format("%d %d\n", getNumberOfRows(), getNumberOfRows());
+		writer.format("%d %d\r\n", getNumberOfRows(), getNumberOfRows());
 		writer.append(toString());
 		writer.flush();
 		writer.close();
